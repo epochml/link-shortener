@@ -168,7 +168,11 @@ app.get('/:id', async function(req,res) {
   const db = await csvdb("links.csv", ["url", "name", "email"]);
   const url = await db.get({name});
   try {
-    res.redirect(url[0].url);
+    if (url.length !== 1) {
+      res.status(404).render('404.html')
+    } else {
+      res.redirect(url[0].url);
+    }
   } catch {
     res.json({
       message: "Unforunately, we were unable to redirect you. Please try again."
