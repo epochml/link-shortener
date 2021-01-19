@@ -32,12 +32,6 @@ app.set('view engine', 'html');
 app.set('views', require('path').join(__dirname, '/view'));
 app.engine('html', hogan);
 
-// A normal un-protected public URL.
-
-app.get('/', function (req, res) {
-  res.render('index');
-});
-
 // Create a session-store to be used by both the express-session
 // middleware and the keycloak middleware.
 
@@ -72,19 +66,28 @@ var keycloak = new Keycloak({
 app.use(keycloak.middleware({
   logout: '/logout',
   admin: '/',
-  protected: '/protected/resource'
+  protected: '/'
 }));
-
-app.get('/login', keycloak.protect(), function (req, res) {
-  res.render('index', {
-    result: JSON.stringify(JSON.parse(req.session['keycloak-token']), null, 4),
-    event: '1. Authentication\n2. Login'
+app.get('/:id', function(req,res) {
+  res.json({
+    message: "You have reached the Epoch Link Shortner redirect page!"
+  });
+})
+app.get('/', keycloak.protect(), function (req, res) {
+  res.json({
+    message: "You have reached the Epoch Link Shortner admin page!"
   });
 });
 
-app.get('/protected/resource', keycloak.protect(), function (req, res) {
-  res.render('index', {
-    result: JSON.stringify(JSON.parse(req.session['keycloak-token']), null, 4),
-    event: '1. Access granted to Default Resource\n'
+app.post('/storeURL', keycloak.protect(), function(req, res) {
+  res.json({
+    message: "You have reached the Epoch Link Shortner submission route!"
   });
-});
+})
+
+// app.get('/protected/resource', keycloak.protect(), function (req, res) {
+//   res.render('index', {
+//     result: JSON.stringify(JSON.parse(req.session['keycloak-token']), null, 4),
+//     event: '1. Access granted to Default Resource\n'
+//   });
+// });
