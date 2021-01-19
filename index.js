@@ -170,7 +170,9 @@ app.get('/:id', async function(req,res) {
   try {
     res.redirect(url[0].url);
   } catch {
-    
+    res.json({
+      message: "Unforunately, we were unable to redirect you. Please try again."
+    })
   }
   
 })
