@@ -82,9 +82,7 @@ app.get('/login', keycloak.protect(), function (req, res) {
   });
 });
 
-app.get('/protected/resource', keycloak.enforcer(['resource:view', 'resource:write'], {
-  resource_server_id: 'out.epochml.org'
-}), function (req, res) {
+app.get('/protected/resource', keycloak.protect(), function (req, res) {
   res.render('index', {
     result: JSON.stringify(JSON.parse(req.session['keycloak-token']), null, 4),
     event: '1. Access granted to Default Resource\n'
