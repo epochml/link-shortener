@@ -67,19 +67,14 @@ async function getUserInfo(bearer_token) {
 }
 
 app.use(keycloak.middleware());
-app.get('/:id', async function(req,res) {
-  const name = req.params.id;
-  const db = await csvdb("links.csv", ["url", "name", "email"]);
-  const url = await db.get({name});
-  res.redirect(url[0].url);
-})
-
 app.get('/', keycloak.protect(), async function (req, res) {
   let email;
+  let name;
   try {
     const bearer_token = JSON.parse(req.session['keycloak-token']).access_token;
     let userInfo = await getUserInfo(bearer_token);
     email = userInfo.email;
+    name = userInfo.name
   } catch (e) {
     res.json({
       message: "Could not get user authorization information.",
@@ -87,9 +82,26 @@ app.get('/', keycloak.protect(), async function (req, res) {
     })
     return
   }
+  res.render('index.html', {email, name})
+  return
+})
+
+app.post('/addURL', keycloak.protect(), async function (req, res) {
+  let email;
+  try {
+    const bearer_token = JSON.parse(req.session['keycloak-token']).access_token;
+    let userInfo = await getUserInfo(bearer_token);
+    email = userInfo.email;
+  } catch (e) {
+    res.status(500).json({
+      message: "Could not get user authorization information.",
+      error: e
+    })
+    return
+  }
   const db = await csvdb("links.csv", ["url", "name", "email"]).catch((e) => {
     console.error(e)
-    res.json({
+    res.status(500).json({
       message: "Error getting information from DB"
     })
     return
@@ -97,7 +109,7 @@ app.get('/', keycloak.protect(), async function (req, res) {
   const url = req.query.url;
   const name = req.query.name; 
   if (url === undefined || name === undefined) {
-    res.json({
+    res.status(400).json({
       message: "Either url or name was not provided."
     })  
     return
@@ -106,14 +118,14 @@ app.get('/', keycloak.protect(), async function (req, res) {
   try {
     old = await db.get({name});
   } catch {
-    res.json({
+    res.status(500).json({
       message: "Error getting information from DB"
     })
     return
   }
   
   if (old.length > 0) {
-    res.json({
+    res.status(400).json({
       message: "This short URL has already been taken. Please try another."
     });
   } else {
@@ -142,4 +154,16 @@ app.get('/getUserURLs', keycloak.protect(), async function (req, res) {
   }
   const all = await db.get({email});
   res.json(all)
+})
+
+app.get('/:id', async function(req,res) {
+  const name = req.params.id;
+  const db = await csvdb("links.csv", ["url", "name", "email"]);
+  const url = await db.get({name});
+  try {
+    res.redirect(url[0].url);
+  } catch {
+    
+  }
+  
 })

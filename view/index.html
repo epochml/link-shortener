@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<head>
+    <title>Epoch Link Shortner</title>
+</head>
+<script>
+    async function submitData() {
+        const url = document.getElementById("url").value
+        const name = document.getElementById("name").value
+        const response = await fetch(`/addURL?url=${url}&name=${name}`, {
+            method: "POST"
+        })
+        if (response.status === 200) {
+            alert("Link shortened successfully!")
+        } else {
+            const resp = await response.json();
+            alert(resp.message)
+        }
+    }
+</script>
+<body>
+    <h1>Welcome to the Epoch Link Shortner!</h1>
+    <h2>You are signed in as {{name}} ({{email}})</h2>
+    <h3>Your email address will be logged when you shorten a URL.</h3>
+    <label for="url">URL to shorten:</label>
+    <input type="text" id="url" name="url"><br><br>
+    <label for="name">Shorten path:</label>
+    <input type="text" id="name" name="name"><br><br>
+    <button onclick="submitData()">Shorten!</button>
+</body>
