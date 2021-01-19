@@ -18,11 +18,9 @@ var Keycloak = require('keycloak-connect');
 var hogan = require('hogan-express');
 var express = require('express');
 var session = require('express-session');
-var { JsonDB } = require('node-json-db')
-var { Config } = require('node-json-db/dist/lib/JsonDBConfig');
+var csvdb = require("csv-database");
 
 var app = express();
-var db = new JsonDB(new Config("links", true, false, '/'));
 var server = app.listen(9215, function () {
   var host = server.address().address;
   var port = server.address().port;
@@ -65,35 +63,24 @@ var keycloak = new Keycloak({
 // root URL.  Various permutations, such as /k_logout will ultimately
 // be appended to the admin URL.
 
-app.use(keycloak.middleware({
-  logout: '/logout',
-  admin: '/',
-  protected: '/'
-}));
-app.get('/:id', function(req,res) {
-  const data = db.getData(`/${req.params.id}`)
-  res.redirect(data)
+app.use(keycloak.middleware());
+app.get('/:id', async function(req,res) {
+  const name = req.params.id;
+  const db = await csvdb("links.csv", ["name","url"]);
+  const url = await db.get({name})
+  res.redirect(url[0].url)
 })
-app.get('/', keycloak.protect(), function (req, res) {
+app.get('/', keycloak.protect(), async function (req, res) {
+  const db = await csvdb("links.csv", ["name","url"]);
+  const url = req.query.url;
+  const name = req.query.name; 
+  await db.add({url, name})
   res.json({
-    message: "You have reached the Epoch Link Shortner admin page!"
-  });
+    url: req.query.url,
+    name: req.query.name
+  })
 });
 
-app.get('/storeURL', keycloak.protect(), function(req, res) {
-  const urlToStore = req.query.url;
-  const short = req.query.short;
-  if (urlToStore !== undefined && short !== undefined) {
-    db.push(`/${short}`,urlToStore)
-    res.json({
-      message: "Route saved"
-    });
-  } else {
-    res.json({
-      message: "Could not save route"
-    });
-  }
-})
 
 // app.get('/protected/resource', keycloak.protect(), function (req, res) {
 //   res.render('index', {

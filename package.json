@@ -9,6 +9,7 @@
   "author": "Dev Singh <dsingh@imsa.edu>",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "csv-database": "^0.9.2",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
     "hogan-express": "^0.5.2",
