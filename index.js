@@ -152,6 +152,13 @@ app.get('/getUserURLs', keycloak.protect(), async function (req, res) {
       error: e
     })
   }
+  const db = await csvdb("links.csv", ["url", "name", "email"]).catch((e) => {
+    console.error(e)
+    res.status(500).json({
+      message: "Error getting information from DB"
+    })
+    return
+  });
   const all = await db.get({email});
   res.json(all)
 })
