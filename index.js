@@ -18,9 +18,11 @@ var Keycloak = require('keycloak-connect');
 var hogan = require('hogan-express');
 var express = require('express');
 var session = require('express-session');
+var { JsonDB } = require('node-json-db')
+var { Config } = require('node-json-db/dist/lib/JsonDBConfig');
 
 var app = express();
-
+var db = new JsonDB(new Config("links", true, false, '/'));
 var server = app.listen(9215, function () {
   var host = server.address().address;
   var port = server.address().port;
@@ -69,9 +71,8 @@ app.use(keycloak.middleware({
   protected: '/'
 }));
 app.get('/:id', function(req,res) {
-  res.json({
-    message: "You have reached the Epoch Link Shortner redirect page!"
-  });
+  const data = db.getData(`/${req.params.id}`)
+  res.redirect(data)
 })
 app.get('/', keycloak.protect(), function (req, res) {
   res.json({
@@ -79,10 +80,19 @@ app.get('/', keycloak.protect(), function (req, res) {
   });
 });
 
-app.post('/storeURL', keycloak.protect(), function(req, res) {
-  res.json({
-    message: "You have reached the Epoch Link Shortner submission route!"
-  });
+app.get('/storeURL', keycloak.protect(), function(req, res) {
+  const urlToStore = req.query.url;
+  const short = req.query.short;
+  if (urlToStore !== undefined && short !== undefined) {
+    db.push(`/${short}`,urlToStore)
+    res.json({
+      message: "Route saved"
+    });
+  } else {
+    res.json({
+      message: "Could not save route"
+    });
+  }
 })
 
 // app.get('/protected/resource', keycloak.protect(), function (req, res) {
