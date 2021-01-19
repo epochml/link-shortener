@@ -167,8 +167,9 @@ app.get('/:id', async function(req,res) {
   const name = req.params.id;
   const db = await csvdb("links.csv", ["url", "name", "email"]);
   const url = await db.get({name});
+  console.log(url)
   try {
-    if (url.length !== 1) {
+    if (url.length < 1) {
       res.status(404).render('404.html')
     } else {
       res.redirect(url[0].url);
