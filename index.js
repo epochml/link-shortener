@@ -162,6 +162,24 @@ app.get('/mylinks', keycloak.protect(), async function (req, res) {
   })
 })
 
+app.delete('/deleteLink', keycloak.protect(), async function (req, res) {
+  const name = req.query.name; 
+  const db = await csvdb("links.csv", ["url", "name", "email"]);
+  try {
+    await db.delete({name})
+  } catch (e) {
+    res.status(500).json({
+      message: "Could not delete the link. Please try again."
+    })
+    return
+  }
+  res.json({
+    name, 
+    deleted: true
+  })
+
+})
+
 app.get('/:id', async function(req,res) {
   const name = req.params.id;
   const db = await csvdb("links.csv", ["url", "name", "email"]);

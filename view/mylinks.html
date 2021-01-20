@@ -4,6 +4,21 @@
     <meta property="og:title" content="Epoch Link Shortener" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 </head>
+<script>
+    async function handleRemove(name) {
+        const response = await fetch(`/deleteLink?name=${name}`, {
+            method: "DELETE"
+        })
+        const parsed = await response.json()
+        if (response.status !== 200) {
+            alert(parsed.message)
+        } else  {
+            alert("URL removed successfully!")
+        }
+        document.getElementById(`urldata-${name}`).parentNode.removeChild(document.getElementById(`urldata-${name}`))
+    
+    }
+</script>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
@@ -41,11 +56,13 @@
                 <tr>
                     <th style="text-align: center;" scope="col">Original URL</th>
                     <th style="text-align: center;" scope="col">Shortened URL</th>
+                    <th style="text-align: center;" scope="col"></th>
                 </tr>
                 {{#data}}
-                <tr>
+                <tr id="urldata-{{name}}">
                     <td style="text-align: center;"><a href="{{url}}">{{url}}</a></td>
                     <td style="text-align: center;"><a href="https://out.epochml.org/{{name}}">https://out.epochml.org/{{name}}</a></td>
+                    <td style="text-align: center;"><button type="button" class="btn btn-danger" onclick="handleRemove('{{name}}')">Remove Link</button></a></td>
                 </tr>
                 {{/data}}
             </table>
