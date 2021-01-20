@@ -6,7 +6,7 @@
 </head>
 <script>
     async function handleRemove(name) {
-        const sure = confirm(`Are you sure you would like to remove this link? Anyone visiting https://out.epochml.org/${name} will recieve an error!`);
+        const sure = confirm(`Are you sure you would like to remove this link? Anyone visiting https://{{baseURL}}/${name} will recieve an error!`);
         if (!sure) {
             alert("Remove cancelled.")
             return
@@ -66,7 +66,7 @@
                 {{#data}}
                 <tr id="urldata-{{name}}">
                     <td style="text-align: center;"><a href="{{url}}">{{url}}</a></td>
-                    <td style="text-align: center;"><a href="https://out.epochml.org/{{name}}">https://out.epochml.org/{{name}}</a></td>
+                    <td style="text-align: center;"><a href="https://{{baseURL}}/{{name}}">https://{{baseURL}}/{{name}}</a></td>
                     <td style="text-align: center;"><button type="button" class="btn btn-danger" onclick="handleRemove('{{name}}')">Remove Link</button></a></td>
                 </tr>
                 {{/data}}

@@ -20,6 +20,7 @@ const express = require('express');
 const session = require('express-session');
 const csvdb = require("csv-database");
 const fetch = require('node-fetch');
+const baseURL = process.env.baseURL || 'https://out.epochml.org';
 
 var app = express();
 var server = app.listen(9215, function () {
@@ -79,7 +80,7 @@ app.get('/', keycloak.protect(), async function (req, res) {
     res.status(500).render('500')
     return
   }
-  res.render('index.html', {email, name})
+  res.render('index.html', {email, name, baseURL})
   return
 })
 
@@ -158,7 +159,8 @@ app.get('/mylinks', keycloak.protect(), async function (req, res) {
   res.render('mylinks', {
     data: all,
     name,
-    email
+    email, 
+    baseURL
   })
 })
 
