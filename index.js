@@ -181,7 +181,23 @@ app.delete('/deleteLink', keycloak.protect(), async function (req, res) {
   })
 
 })
+app.put('/updateLink', keycloak.protect(), async function (req, res) {
+  const name = req.query.name; 
+  const url = req.query.url;
+  let dbCheck;
+  const db = await csvdb("links.csv", ["url", "name", "email"]);
+  try {
+    await db.edit({name}, {url})
+    dbCheck = await db.get({name});
+  } catch (e) {
+    res.status(500).json({
+      message: "Could not update the link. Please try again."
+    })
+    return
+  }
+  res.json(dbCheck[0])
 
+})
 app.get('/:id', async function(req,res) {
   const name = req.params.id;
   const db = await csvdb("links.csv", ["url", "name", "email"]);
