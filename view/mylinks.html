@@ -6,6 +6,11 @@
 </head>
 <script>
     async function handleRemove(name) {
+        const sure = confirm(`Are you sure you would like to remove this link? Anyone visiting https://out.epochml.org/${name} will recieve an error!`);
+        if (!sure) {
+            alert("Remove cancelled.")
+            return
+        }
         const response = await fetch(`/deleteLink?name=${name}`, {
             method: "DELETE"
         })
