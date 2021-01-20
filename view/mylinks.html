@@ -23,9 +23,9 @@
         const parsed = await response.json()
         if (response.status !== 200) {
             alert(parsed.message)
-            document.getElementById(`urldata-${name}`).parentNode.removeChild(document.getElementById(`urldata-${name}`))
         } else  {
             alert("URL removed successfully!")
+            document.getElementById(`urldata-${name}`).parentNode.removeChild(document.getElementById(`urldata-${name}`))
         }
     }
     async function handleEdit(name, url) {
@@ -41,9 +41,9 @@
         })
         if (response.status !== 200) {
             alert(parsed.message)
-            document.getElementById(`urldata-${name}-url`).innerHTML = newURL
         } else  {
             alert("URL changed successfully!")
+            document.getElementById(`urldata-${name}-url`).innerHTML = newURL
         }
     }
 </script>
