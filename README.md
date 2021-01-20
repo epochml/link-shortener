@@ -1,34 +1,25 @@
-# Basic NodeJS Example
+# Epoch Link Shortener
 
+The Epoch Link Shortener is an internal tool for shortening links and reducing link rot by redirecting users to an origin site from an Epoch-controlled link.
 
-## Start and configure Keycloak
+## Installation
 
-### Start Keycloak:
+Ensure that you have [Node](https://nodejs.org/en/) and [Yarn](https://yarnpkg.com/) installed on your machine. Then, run the following commands:
 
-#### Docker
-Using the image from https://hub.docker.com/r/jboss/keycloak/
-```
-docker run -p 8080:8080 -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin jboss/keycloak
-```
-#### Standard
-```
-/<Path-To-Keycloak>/bin/standalone.sh
+```bash
+yarn
+baseURL="localhost:9215" yarn dev # set the base URL environment variable for HTML formatting
 ```
 
-Open the Keycloak admin console, click on Add Realm, click on import 'Select file', 
-select nodejs-example-realm.json and click Create.
+## Usage
 
-Link the HEAD code of keycloak-connect by running:
+This tool integrates with the Epoch Single Sign-On service to only allow authorized Epoch users to create links redirections. After you log in with your Epoch credentials, you will be presented with a portal that will allow you to shorten links. In the navigation bar, there is also a "My Links" tab that will allow you to delete or edit any links you have previously made. 
 
-```
-npm link ../
-```
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-Install the dependencies and start NodeJS example by running:
+## Authors
+Maintainer: Dev Singh (<dsingh@imsa.edu>)
 
-```
-npm install
-npm start
-```
-
-Open the browser at http://localhost:3000/ and login with username: 'user', and password: 'password'.
+## License
+[BSD 3-Clause](https://github.com/epochml/link-shortener/blob/master/LICENSE)
