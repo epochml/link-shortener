@@ -22,4 +22,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 Maintainer: Dev Singh (<dsingh@imsa.edu>)
 
 ## License
-[BSD 3-Clause](https://github.com/epochml/link-shortener/blob/master/LICENSE)
+[BSD 3-Clause](https://raw.githubusercontent.com/epochml/link-shortener/master/LICENSE)
