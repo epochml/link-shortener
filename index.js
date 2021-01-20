@@ -5,6 +5,7 @@ const session = require('express-session');
 const csvdb = require("csv-database");
 const fetch = require('node-fetch');
 const baseURL = process.env.baseURL || 'out.epochml.org';
+const favicon = require('serve-favicon');
 
 var app = express();
 var server = app.listen(9215, function () {
@@ -29,6 +30,8 @@ app.use(session({
   saveUninitialized: true,
   store: memoryStore
 }));
+
+app.use(favicon(__dirname + '/public/img/favicon.ico'));
 
 var keycloak = new Keycloak({
   store: memoryStore
