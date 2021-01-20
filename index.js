@@ -8,7 +8,7 @@ const baseURL = process.env.baseURL || 'out.epochml.org';
 const favicon = require('serve-favicon');
 
 var app = express();
-var server = app.listen(9215, function () {
+var server = app.listen(9200, function () {
   var host = server.address().address;
   var port = server.address().port;
   console.log('Example app listening at http://%s:%s', host, port);
