@@ -76,10 +76,7 @@ app.get('/', keycloak.protect(), async function (req, res) {
     email = userInfo.email;
     name = userInfo.name
   } catch (e) {
-    res.json({
-      message: "Could not get user authorization information.",
-      error: e
-    })
+    res.status(500).render('500')
     return
   }
   res.render('index.html', {email, name})
@@ -100,7 +97,6 @@ app.post('/addURL', keycloak.protect(), async function (req, res) {
     return
   }
   const db = await csvdb("links.csv", ["url", "name", "email"]).catch((e) => {
-    console.error(e)
     res.status(500).json({
       message: "Error getting information from DB"
     })
@@ -140,17 +136,16 @@ app.post('/addURL', keycloak.protect(), async function (req, res) {
 
 });
 
-app.get('/getUserURLs', keycloak.protect(), async function (req, res) {
+app.get('/mylinks', keycloak.protect(), async function (req, res) {
   let email;
+  let name;
   try {
     const bearer_token = JSON.parse(req.session['keycloak-token']).access_token;
     let userInfo = await getUserInfo(bearer_token);
     email = userInfo.email;
+    name = userInfo.name
   } catch (e) {
-    res.json({
-      message: "Could not get user authorization information.",
-      error: e
-    })
+    res.status(500).render('500')
   }
   const db = await csvdb("links.csv", ["url", "name", "email"]).catch((e) => {
     console.error(e)
@@ -160,14 +155,17 @@ app.get('/getUserURLs', keycloak.protect(), async function (req, res) {
     return
   });
   const all = await db.get({email});
-  res.json(all)
+  res.render('mylinks', {
+    data: all,
+    name,
+    email
+  })
 })
 
 app.get('/:id', async function(req,res) {
   const name = req.params.id;
   const db = await csvdb("links.csv", ["url", "name", "email"]);
   const url = await db.get({name});
-  console.log(url)
   try {
     if (url.length < 1) {
       res.status(404).render('404.html')
@@ -175,9 +173,7 @@ app.get('/:id', async function(req,res) {
       res.redirect(url[0].url);
     }
   } catch {
-    res.json({
-      message: "Unforunately, we were unable to redirect you. Please try again."
-    })
+    res.status(500).render('500')
   }
   
 })
