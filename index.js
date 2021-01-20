@@ -20,7 +20,7 @@ const express = require('express');
 const session = require('express-session');
 const csvdb = require("csv-database");
 const fetch = require('node-fetch');
-const baseURL = process.env.baseURL || 'https://out.epochml.org';
+const baseURL = process.env.baseURL || 'out.epochml.org';
 
 var app = express();
 var server = app.listen(9215, function () {
