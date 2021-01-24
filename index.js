@@ -48,6 +48,7 @@ var keycloak = new Keycloak({
 });
 
 app.use(favicon(__dirname + '/public/img/favicon.ico'));
+app.use('/static', express.static('public'))
 
 
 
@@ -262,8 +263,11 @@ app.get('/:id', async function (req, res) {
   const name = req.params.id;
   const ts = Date.now();
   getRedirectURL(name).then(url => {
-    res.redirect(url[0].url);
+    try {
+      res.redirect(url[0].url);
+    } catch {
+      res.status(404).render('404')
+    }
     return;
   }).catch(res.status(500).render('500'))
-  console.log(ts, name);
 })
