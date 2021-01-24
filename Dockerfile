@@ -1,6 +1,6 @@
 FROM node:lts
 WORKDIR /usr/src/app
-RUN apt-get update && apt-get install gnupg2 build-essential make gcc -y
+RUN apt-get update && apt-get install gnupg2 build-essential make gcc libc6 -y
 COPY package*.json ./
 RUN yarn
 COPY . .
