@@ -2,17 +2,24 @@ const Keycloak = require('keycloak-connect');
 const hogan = require('hogan-express');
 const express = require('express');
 const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
 const fetch = require('node-fetch');
 const baseURL = process.env.baseURL || 'out.epochml.org';
 const favicon = require('serve-favicon');
 const sqlite3 = require('sqlite3')
-
-const db = new sqlite3.Database('./db.sqlite3', sqlite3.OPEN_READWRITE, (err) => {
-  if (err) {
-    console.error(err.message);
-    process.exit(1);
-  }
-})
+const dbVendor = process.env.DB_VENDOR;
+if (dbVendor === "postgresql") {
+  console.error("SQL support not yet implemented")
+  process.exit(2)
+} else {
+  var db = new sqlite3.Database(process.env.DB_FILE, sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+      process.exit(1);
+    }
+  })
+  var store = new SQLiteStore({'dir': process.env.SESSION_DB_FILE_LOC, 'db': process.env.SESSION_DB_FILE_NAME});
+}
 
 var app = express();
 var server = app.listen(9215, function () {
@@ -29,20 +36,20 @@ app.engine('html', hogan);
 // Create a session-store to be used by both the express-session
 // middleware and the keycloak middleware.
 
-var memoryStore = new session.MemoryStore();
-
 app.use(session({
   secret: 'mySecret',
   resave: false,
   saveUninitialized: true,
-  store: memoryStore
+  store: store
 }));
+
+var keycloak = new Keycloak({
+  store: store
+});
 
 app.use(favicon(__dirname + '/public/img/favicon.ico'));
 
-var keycloak = new Keycloak({
-  store: memoryStore
-});
+
 
 async function getUserInfo(bearer_token) {
   const myHeaders = {
