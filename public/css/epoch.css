@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'Open Sans';
-    src: url('static/fonts/OpenSans-Regular');
+    src: url('/static/fonts/OpenSans-Regular.ttf');
     font-style: normal;
 }
 .epoch-dark {
