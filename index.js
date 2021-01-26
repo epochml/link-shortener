@@ -259,15 +259,22 @@ app.put('/updateLink', keycloak.protect(), async function (req, res) {
     return
   })
 })
+
 app.get('/:id', async function (req, res) {
   const name = req.params.id;
   const ts = Date.now();
-  getRedirectURL(name).then(url => {
-    try {
-      res.redirect(url[0].url);
-    } catch {
+  try {
+    const url = await getRedirectURL(name)
+    if (url[0] !== undefined) {
+      res.redirect(url[0].url)
+      return
+    } else {
       res.status(404).render('404')
+      return
     }
-    return;
-  }).catch(res.status(500).render('500'))
+  } catch {
+    res.status(500).render('500')
+    return
+  }
+
 })
