@@ -1,6 +1,6 @@
 # Epoch Link Shortener
 
-The Epoch Link Shortener is an internal tool for shortening links and reducing link rot by redirecting users to an origin site from an Epoch-controlled link.
+The Epoch Link Shortener is an internal tool developed at Epoch for shortening links and reducing link rot by redirecting users to an origin site from an Epoch-controlled link.
 
 ## Installation
 
