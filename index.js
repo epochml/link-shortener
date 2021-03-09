@@ -79,7 +79,7 @@ passport.use(new OIDCStrategy({
   responseMode: config.creds.responseMode,
   redirectUrl: config.creds.redirectUrl,
   allowHttpForRedirectUrl: config.creds.allowHttpForRedirectUrl,
-  clientSecret: config.creds.clientSecret,
+  clientSecret: config.creds.CLIENT_SECRET,
   validateIssuer: config.creds.validateIssuer,
   isB2C: config.creds.isB2C,
   issuer: config.creds.issuer,

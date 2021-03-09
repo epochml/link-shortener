@@ -7,6 +7,7 @@ services:
       - DB_FILE=/data/db.sqlite3
       - SESSION_DB_FILE_LOC=/data/
       - SESSION_DB_FILE_NAME=sessions.sqlite3
+      - CLIENT_SECRET
     ports:
       - "9215:9215"
     volumes:

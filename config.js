@@ -12,7 +12,7 @@ exports.creds = {
   
     // Required if `responseType` is 'code', 'id_token code' or 'code id_token'. 
     // If app key contains '\', replace it with '\\'.
-    clientSecret: process.env.clientSecret, 
+    CLIENT_SECRET: process.env.CLIENT_SECRET, 
   
     // Required, must be 'code', 'code id_token', 'id_token code' or 'id_token'
     // If you want to get access_token, you must use 'code', 'code id_token' or 'id_token code' 
@@ -22,7 +22,7 @@ exports.creds = {
     responseMode: 'form_post', 
   
     // Required, the reply URL registered in AAD for your app
-    redirectUrl: `http://localhost:9215/auth/openid/return`, 
+    redirectUrl: process.env.baseURL ? `http://${process.env.baseURL}/auth/openid/return`: `https://out.epochml.org/auth/openid/return`, 
   
     // Required if we use http for redirectUrl
     allowHttpForRedirectUrl: true,
@@ -69,7 +69,7 @@ exports.creds = {
   };
   
   // The url you need to go to destroy the session with AAD
-  exports.destroySessionUrl = `https://login.microsoftonline.com/common/oauth2/logout?post_logout_redirect_uri=http://localhost:9215`;
+  exports.destroySessionUrl = process.env.baseURL ? `https://login.microsoftonline.com/common/oauth2/logout?post_logout_redirect_uri=http://localhost:9215` : `https://login.microsoftonline.com/common/oauth2/logout?post_logout_redirect_uri=https://out.epochml.org`;
   
   // If you want to use the mongoDB session store for session middleware, set to true; otherwise we will use the default
   // session store provided by express-session.
