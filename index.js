@@ -1,13 +1,16 @@
-const Keycloak = require('keycloak-connect');
 const hogan = require('hogan-express');
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
-const fetch = require('node-fetch');
 const baseURL = process.env.baseURL || 'out.epochml.org';
 const favicon = require('serve-favicon');
 const sqlite3 = require('sqlite3')
 const dbVendor = process.env.DB_VENDOR;
+const config = require('./config');
+const passport = require('passport')
+var OIDCStrategy = require('passport-azure-ad').OIDCStrategy;
+var cookieParser = require('cookie-parser');
+
 if (dbVendor === "postgresql") {
   console.error("SQL support not yet implemented")
   process.exit(2)
@@ -27,8 +30,6 @@ var server = app.listen(9215, function () {
   var port = server.address().port;
   console.log('Example app listening at http://%s:%s', host, port);
 });
-
-// Register '.mustache' extension with The Mustache Express
 app.set('view engine', 'html');
 app.set('views', require('path').join(__dirname, '/view'));
 app.engine('html', hogan);
@@ -42,32 +43,85 @@ app.use(session({
   saveUninitialized: true,
   store: store
 }));
-
-var keycloak = new Keycloak({
-  store: store
+//-----------------------------------------------------------------------------
+// To support persistent login sessions, Passport needs to be able to
+// serialize users into and deserialize users out of the session.  Typically,
+// this will be as simple as storing the user ID when serializing, and finding
+// the user by ID when deserializing.
+//-----------------------------------------------------------------------------
+passport.serializeUser(function(user, done) {
+  done(null, user.oid);
 });
 
+passport.deserializeUser(function(oid, done) {
+  findByOid(oid, function (err, user) {
+    done(err, user);
+  });
+});
+
+// array to hold logged in users
+var users = [];
+
+var findByOid = function(oid, fn) {
+  for (var i = 0, len = users.length; i < len; i++) {
+    var user = users[i];
+    if (user.oid === oid) {
+      return fn(null, user);
+    }
+  }
+  return fn(null, null);
+};
+
+passport.use(new OIDCStrategy({
+  identityMetadata: config.creds.identityMetadata,
+  clientID: config.creds.clientID,
+  responseType: config.creds.responseType,
+  responseMode: config.creds.responseMode,
+  redirectUrl: config.creds.redirectUrl,
+  allowHttpForRedirectUrl: config.creds.allowHttpForRedirectUrl,
+  clientSecret: config.creds.clientSecret,
+  validateIssuer: config.creds.validateIssuer,
+  isB2C: config.creds.isB2C,
+  issuer: config.creds.issuer,
+  passReqToCallback: config.creds.passReqToCallback,
+  scope: config.creds.scope,
+  loggingLevel: config.creds.loggingLevel,
+  nonceLifetime: config.creds.nonceLifetime,
+  nonceMaxAmount: config.creds.nonceMaxAmount,
+  useCookieInsteadOfSession: config.creds.useCookieInsteadOfSession,
+  cookieEncryptionKeys: config.creds.cookieEncryptionKeys,
+  clockSkew: config.creds.clockSkew,
+},
+function(iss, sub, profile, accessToken, refreshToken, done) {
+  if (!profile.oid) {
+    return done(new Error("No oid found"), null);
+  }
+  // asynchronous verification, for effect...
+  process.nextTick(function () {
+    findByOid(profile.oid, function(err, user) {
+      if (err) {
+        return done(err);
+      }
+      if (!user) {
+        // "Auto-registration"
+        users.push(profile);
+        return done(null, profile);
+      }
+      return done(null, user);
+    });
+  });
+}
+));
+app.use(cookieParser());
+app.use(express.urlencoded({ extended : true }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(favicon(__dirname + '/public/img/favicon.ico'));
 app.use('/static', express.static('public'))
-
-
-
-async function getUserInfo(bearer_token) {
-  const myHeaders = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${bearer_token}`
-  };
-
-  const response = await fetch('https://webauth.epochml.org/auth/realms/epochml.org/protocol/openid-connect/userinfo', {
-    method: 'GET',
-    headers: myHeaders,
-  }).catch(error => { console.error(error); });
-  if (response.status === 200) {
-    return response.json();
-  } else {
-    throw new Error('Something went wrong on api server!');
-  }
-}
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) { return next(); }
+  res.redirect('/login');
+};
 
 async function addURLToDB(name, url, email) {
   return new Promise(function(resolve, reject) {
@@ -140,36 +194,73 @@ async function updateRecord(name, url) {
   })
 }
 
-app.use(keycloak.middleware());
-app.get('/', keycloak.protect(), async function (req, res) {
-  let email;
-  let name;
-  try {
-    const bearer_token = JSON.parse(req.session['keycloak-token']).access_token;
-    let userInfo = await getUserInfo(bearer_token);
-    email = userInfo.email;
-    name = userInfo.name
-  } catch (e) {
-    res.status(500).render('500')
-    return
-  }
-  res.render('index.html', { email, name, baseURL })
+app.get('/login',
+  function(req, res, next) {
+    passport.authenticate('azuread-openidconnect', 
+      { 
+        response: res,                      // required
+        resourceURL: config.resourceURL,    // optional. Provide a value if you want to specify the resource.
+        customState: 'my_state',            // optional. Provide a value if you want to provide custom state value.
+        failureRedirect: '/' 
+      }
+    )(req, res, next);
+  },
+  function(req, res) {
+    res.redirect('/');
+});
+
+// 'GET returnURL'
+// `passport.authenticate` will try to authenticate the content returned in
+// query (such as authorization code). If authentication fails, user will be
+// redirected to '/' (home page); otherwise, it passes to the next middleware.
+app.get('/auth/openid/return',
+  function(req, res, next) {
+    passport.authenticate('azuread-openidconnect', 
+      { 
+        response: res,    // required
+        failureRedirect: '/'  
+      }
+    )(req, res, next);
+  },
+  function(req, res) {
+    res.redirect('/');
+  });
+
+// 'POST returnURL'
+// `passport.authenticate` will try to authenticate the content returned in
+// body (such as authorization code). If authentication fails, user will be
+// redirected to '/' (home page); otherwise, it passes to the next middleware.
+app.post('/auth/openid/return',
+  function(req, res, next) {
+    passport.authenticate('azuread-openidconnect', 
+      { 
+        response: res,    // required
+        failureRedirect: '/'  
+      }
+    )(req, res, next);
+  },
+  function(req, res) {
+    res.redirect('/');
+  });
+
+// 'logout' route, logout from passport, and destroy the session with AAD.
+app.get('/logout', function(req, res){
+  req.session.destroy(function(err) {
+    req.logOut();
+    res.redirect(config.destroySessionUrl);
+  });
+});
+
+// begin business logic
+
+app.get('/', ensureAuthenticated, async function (req, res) {
+
+  res.render('index.html', { email: req.user._json.preferred_username, name: req.user.displayName, baseURL })
   return
 })
 
-app.post('/addURL', keycloak.protect(), async function (req, res) {
-  let email;
-  try {
-    const bearer_token = JSON.parse(req.session['keycloak-token']).access_token;
-    let userInfo = await getUserInfo(bearer_token);
-    email = userInfo.email;
-  } catch (e) {
-    res.status(500).json({
-      message: "Could not get user authorization information.",
-      error: e
-    })
-    return
-  }
+app.post('/addURL', ensureAuthenticated, async function (req, res) {
+  const email = req.user._json.preferred_username;
   const url = req.query.url;
   const name = req.query.name;
   if (url.indexOf(baseURL) > -1 ) {
@@ -206,17 +297,9 @@ app.post('/addURL', keycloak.protect(), async function (req, res) {
 
 });
 
-app.get('/mylinks', keycloak.protect(), async function (req, res) {
-  let email;
-  let name;
-  try {
-    const bearer_token = JSON.parse(req.session['keycloak-token']).access_token;
-    let userInfo = await getUserInfo(bearer_token);
-    email = userInfo.email;
-    name = userInfo.name
-  } catch (e) {
-    res.status(500).render('500')
-  }
+app.get('/mylinks', ensureAuthenticated, async function (req, res) {
+  const email = req.user._json.preferred_username;
+  const name = req.user.displayName;
   const data = await getDataForEmail(email).catch(() => {res.status(500).render('500'); return});
   res.render('mylinks', {
     data,
@@ -226,7 +309,7 @@ app.get('/mylinks', keycloak.protect(), async function (req, res) {
   })
 })
 
-app.delete('/deleteLink', keycloak.protect(), async function (req, res) {
+app.delete('/deleteLink', ensureAuthenticated, async function (req, res) {
   const name = req.query.name;
   removeURLfromDB(name).then(() => {
     res.json({
@@ -240,7 +323,7 @@ app.delete('/deleteLink', keycloak.protect(), async function (req, res) {
     return
   })
 })
-app.put('/updateLink', keycloak.protect(), async function (req, res) {
+app.put('/updateLink', ensureAuthenticated, async function (req, res) {
   const name = req.query.name;
   const url = req.query.url;
   if (url.indexOf(baseURL) > -1 ) {
