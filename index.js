@@ -36,13 +36,33 @@ app.engine('html', hogan);
 
 // Create a session-store to be used by both the express-session
 // middleware and the keycloak middleware.
-
+function makeSecret() {
+  const length = 64;
+  let result           = '';
+  const characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]\;\',./<>?:"{}|';
+  const charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+     result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+function getRandomURL() {
+  const length = 6;
+  let result           = '';
+  const characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+     result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 app.use(session({
-  secret: 'mySecret',
+  secret: makeSecret(),
   resave: false,
   saveUninitialized: true,
   store: store
 }));
+
 //-----------------------------------------------------------------------------
 // To support persistent login sessions, Passport needs to be able to
 // serialize users into and deserialize users out of the session.  Typically,
@@ -342,7 +362,34 @@ app.put('/updateLink', ensureAuthenticated, async function (req, res) {
     return
   })
 })
-
+app.get('/getRandomURL', ensureAuthenticated, async function (req, res) {
+  let exists = true;
+  let generatedURL = '';
+  let i = 0;
+  while(exists) {
+    try {
+      generatedURL = getRandomURL();
+      const url = await getRedirectURL(generatedURL);
+      exists = url[0] !== undefined;
+      if (i > 10) {
+        throw new Error("In a generation loop, must exit.")
+      }
+    } catch {
+      res.status(500).json({success: false})
+      return
+    }
+  }
+  try {
+    if (generatedURL !== '') {
+      res.json({success: true, generatedURL})
+      return
+    }
+    throw new Error("Did not actually generate a new URL.")
+  } catch {
+    res.status(500).json({success: false})
+    return
+  }
+})
 app.get('/:id', async function (req, res) {
   const name = req.params.id;
   const ts = Date.now();
