@@ -7,23 +7,6 @@ function isURL(str) {
         '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
     return !!pattern.test(str);
 }
-async function handleRemove(name) {
-    const sure = confirm(`Are you sure you would like to remove this link? Anyone visiting https://{{baseURL}}/${name} will recieve an error!`);
-    if (!sure) {
-        alert("Remove cancelled.")
-        return
-    }
-    const response = await fetch(`/deleteLink?name=${name}`, {
-        method: "DELETE"
-    })
-    const parsed = await response.json()
-    if (response.status !== 200) {
-        alert(parsed.message)
-    } else  {
-        alert("URL removed successfully!")
-        document.getElementById(`urldata-${name}`).parentNode.removeChild(document.getElementById(`urldata-${name}`))
-    }
-}
 async function handleEdit(name, url) {
     let newURL;
     while (!isURL(newURL)) {

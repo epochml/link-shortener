@@ -8,6 +8,25 @@
         <link rel="stylesheet" href="/static/css/epoch.css">
         <script src="/static/js/mylinks.js"></script>
     </head>
+    <script>
+        async function handleRemove(name) {
+            const sure = confirm(`Are you sure you would like to remove this link? Anyone visiting https://{{baseURL}}/${name} will recieve an error!`);
+            if (!sure) {
+                alert("Remove cancelled.")
+                return
+            }
+            const response = await fetch(`/deleteLink?name=${name}`, {
+                method: "DELETE"
+            })
+            const parsed = await response.json()
+            if (response.status !== 200) {
+                alert(parsed.message)
+            } else  {
+                alert("URL removed successfully!")
+                document.getElementById(`urldata-${name}`).parentNode.removeChild(document.getElementById(`urldata-${name}`))
+            }
+        }
+    </script>
     <body class="epoch-dark epoch-font epoch-child-light">
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container-fluid">
