@@ -2,7 +2,7 @@ const hogan = require('hogan-express');
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
-const baseURL = process.env.baseURL || 'out.epochml.org';
+const baseURL = process.env.baseURL || 'goepoch.ml';
 const favicon = require('serve-favicon');
 const sqlite3 = require('sqlite3')
 const dbVendor = process.env.DB_VENDOR;
@@ -298,7 +298,7 @@ app.post('/addURL', ensureAuthenticated, async function (req, res) {
   addURLToDB(name, url, email).then((obj) => {
     res.json({
       url: obj.url,
-      shortURL: `https://out.epochml.org/${obj.name}`,
+      shortURL: `https://goepoch.ml/${obj.name}`,
       email: obj.email
     });
   }).catch((err) => {
