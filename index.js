@@ -56,11 +56,12 @@ function getRandomURL() {
   }
   return result;
 }
+const secret = process.env.NODE_ENV === "development" ? "secret" : makeSecret()
 app.use(session({
-  secret: makeSecret(),
+  secret: secret,
   resave: false,
   saveUninitialized: true,
-  store: store
+  store: process.env.NODE_ENV === "development" ? undefined : store
 }));
 
 //-----------------------------------------------------------------------------
@@ -134,6 +135,7 @@ function(iss, sub, profile, accessToken, refreshToken, done) {
 ));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended : true }));
+app.use(express.json())
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(favicon(__dirname + '/public/img/favicon.ico'));
@@ -143,11 +145,11 @@ function ensureAuthenticated(req, res, next) {
   res.redirect('/login');
 };
 
-async function addURLToDB(name, url, email) {
+async function addURLToDB(name, url, email, groups) {
   return new Promise(function(resolve, reject) {
     db.serialize(function() {
-      const stmt = db.prepare("INSERT INTO urlData (name, url, email) VALUES (?, ?, ?)");
-      stmt.run([name, url, email], function(err) {
+      const stmt = db.prepare("INSERT INTO urlData (name, url, email, groups) VALUES (?, ?, ?, ?)");
+      stmt.run([name, url, email, groups], function(err) {
         if (err) {
           reject(err)
         } else {
@@ -171,6 +173,37 @@ async function getDataForEmail(email) {
     })
   })
 }
+
+async function getDelegatedLinks(userGroups) {
+  return new Promise(function(resolve, reject) {
+    db.serialize(function() {
+      const stmt = db.prepare("SELECT * FROM urlData;");
+      stmt.all([], function(err, allData) {
+        if (err) {
+          reject(err)
+        } else {
+          allData = allData.map(item => {
+            if (item.groups === null) {
+              return item;    
+            }
+            item.groups = item.groups.split(','); 
+            return item;
+          })
+          const data = allData.filter(item => {
+            let compareGroups = []
+            if (item.groups !== null) {
+              compareGroups = item.groups
+            }
+            const mergedArray = userGroups.filter(value => compareGroups.includes(value));
+            return mergedArray.length > 0 
+          })
+          resolve(data)
+        }
+      })
+    })
+  })
+}
+
 async function removeURLfromDB(name) {
   return new Promise(function(resolve, reject) {
     db.serialize(function() {
@@ -274,8 +307,7 @@ app.get('/logout', function(req, res){
 // begin business logic
 
 app.get('/', ensureAuthenticated, async function (req, res) {
-
-  res.render('index.html', { email: req.user._json.preferred_username, name: req.user.displayName, baseURL })
+  res.render('index.html', { email: req.user._json.preferred_username, name: req.user.displayName, baseURL, userGroups: req.user._json.groups.map((item) => {return {group: item}}) })
   return
 })
 
@@ -283,6 +315,7 @@ app.post('/addURL', ensureAuthenticated, async function (req, res) {
   const email = req.user._json.preferred_username;
   const url = req.query.url;
   const name = req.query.name;
+  const groups = req.body.groups
   if (url.indexOf(baseURL) > -1 ) {
     res.json({
       message: `The origin URL cannot be a path of ${baseURL}`
@@ -295,11 +328,12 @@ app.post('/addURL', ensureAuthenticated, async function (req, res) {
     })
     return
   }
-  addURLToDB(name, url, email).then((obj) => {
+  addURLToDB(name, url, email, groups).then((obj) => {
     res.json({
       url: obj.url,
       shortURL: `https://goepoch.ml/${obj.name}`,
-      email: obj.email
+      email: obj.email,
+      groups: groups
     });
   }).catch((err) => {
     if (err.errno == 19) {
@@ -320,12 +354,15 @@ app.post('/addURL', ensureAuthenticated, async function (req, res) {
 app.get('/mylinks', ensureAuthenticated, async function (req, res) {
   const email = req.user._json.preferred_username;
   const name = req.user.displayName;
+  const userGroups = req.user._json.groups;
   const data = await getDataForEmail(email).catch(() => {res.status(500).render('500'); return});
+  const delegatedLinks = await getDelegatedLinks(userGroups).catch(() => {res.status(500).render('500'); return});
   res.render('mylinks', {
     data,
     name,
     email,
-    baseURL
+    baseURL,
+    delegatedLinks
   })
 })
 

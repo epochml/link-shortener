@@ -23,6 +23,16 @@ async function getRandomURL() {
         return
     }
 }
+async function getGroups() {
+    const checkboxes = document.getElementsByTagName('input');
+    let selectedGroups = [];
+    for (let i = 0; i < checkboxes.length; i++)  {
+        if (checkboxes[i].type == 'checkbox' && checkboxes[i].checked) {
+            selectedGroups.push(checkboxes[i].id.slice(0, -6)); 
+        }
+    }
+    return selectedGroups;
+}
 async function submitData() {
     const url = document.getElementById("url").value
     if (!isURL(url)) {
@@ -34,8 +44,14 @@ async function submitData() {
         alert("Please enter a short URL")
         return
     }
+    const groups = await getGroups()
+    console.log(groups)
     const response = await fetch(`/addURL?url=${url}&name=${name}`, {
-        method: "POST"
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({groups: groups})
     })
     if (response.status === 200) {
         alert("Link shortened successfully!")

@@ -57,6 +57,20 @@
                 </div>
                 <div id="urlHelp" class="form-text">Enter the alias which will redirect to your original site.</div>
             </div>
+            {{#userGroups.length}}
+            <div class="mb-3">
+                <h2 id="delegate-header">Delegate Access</h2>
+                <label for="delegate-header" class="form-label">Select groups that are permitted to manage this link.</label>
+                {{#userGroups}}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="{{group}}-check">
+                        <label class="form-check-label" for="{{group}}-check">
+                        {{group}}
+                        </label>
+                    </div>
+                {{/userGroups}}
+            </div>
+            {{/userGroups.length}}
             <button class="btn btn-primary" onclick="submitData()">Shorten!</button>
         </div>
     </body>
